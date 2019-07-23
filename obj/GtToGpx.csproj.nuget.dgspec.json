@@ -1,0 +1,61 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Data\\repos\\GtToGpx\\GtToGpx.csproj": {}
+  },
+  "projects": {
+    "C:\\Data\\repos\\GtToGpx\\GtToGpx.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Data\\repos\\GtToGpx\\GtToGpx.csproj",
+        "projectName": "GtToGpx",
+        "projectPath": "C:\\Data\\repos\\GtToGpx\\GtToGpx.csproj",
+        "packagesPath": "C:\\Data\\nuget\\cache",
+        "outputPath": "C:\\Data\\repos\\GtToGpx\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\s1783\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp2.1"
+        ],
+        "sources": {
+          "C:\\Data\\nuget\\local": {},
+          "https://api.nuget.org/v3/index.json": {},
+          "https://repo.eb.lan.at/artifactory/api/nuget/microsoftdotnet-nuget": {},
+          "https://repo.eb.lan.at/artifactory/api/nuget/sIT-nuget/": {}
+        },
+        "frameworks": {
+          "netcoreapp2.1": {
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp2.1": {
+          "dependencies": {
+            "Microsoft.NETCore.App": {
+              "target": "Package",
+              "version": "[2.1.0, )",
+              "autoReferenced": true
+            }
+          },
+          "imports": [
+            "net461"
+          ],
+          "assetTargetFallback": true,
+          "warn": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+C:\Data\repos\GtToGpx\bin\Debug\netcoreapp2.1\GtToGpx.deps.json
+C:\Data\repos\GtToGpx\bin\Debug\netcoreapp2.1\GtToGpx.runtimeconfig.json
+C:\Data\repos\GtToGpx\bin\Debug\netcoreapp2.1\GtToGpx.runtimeconfig.dev.json
+C:\Data\repos\GtToGpx\bin\Debug\netcoreapp2.1\GtToGpx.dll
+C:\Data\repos\GtToGpx\bin\Debug\netcoreapp2.1\GtToGpx.pdb
+C:\Data\repos\GtToGpx\obj\Debug\netcoreapp2.1\GtToGpx.csprojAssemblyReference.cache
+C:\Data\repos\GtToGpx\obj\Debug\netcoreapp2.1\GtToGpx.csproj.CoreCompileInputs.cache
+C:\Data\repos\GtToGpx\obj\Debug\netcoreapp2.1\GtToGpx.AssemblyInfoInputs.cache
+C:\Data\repos\GtToGpx\obj\Debug\netcoreapp2.1\GtToGpx.AssemblyInfo.cs
+C:\Data\repos\GtToGpx\obj\Debug\netcoreapp2.1\GtToGpx.dll
+C:\Data\repos\GtToGpx\obj\Debug\netcoreapp2.1\GtToGpx.pdb
