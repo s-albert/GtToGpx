@@ -16,28 +16,37 @@ namespace GtToGpx
 
             var json = ReadJsonFile (args[0]);
 
-            WriteToGpx (json);
+           // WriteToGpx (json);
         }
 
-        static string ReadJsonFile (string file)
+        static List<Item> ReadJsonFile (string file)
         {
+            List<Item> items;
 
             using (StreamReader r = new StreamReader (file))
             {
                 string json = r.ReadToEnd ();
-                List<Item> items = JsonConvert.DeserializeObject<List<Item>> (json);
+                items = JsonConvert.DeserializeObject<List<Item>> (json);
             }
-            return "";
+            return items;
         }
 
         public class Item
         {
-            public int millis;
-            public string stamp;
-            public DateTime datetime;
-            public string light;
-            public float temp;
-            public float vcc;
+            public MotionPathData motionPathData;
+            public int totalSteps;
+            public int totalTime;
+            public int sportType;
+            public int totalCalories;
+            public string timeZone;
+        }
+
+        public class MotionPathData
+        {
+            public long startTime;
+            public long endTime;
+            public int totalDistance;
+            public string attribute;
         }
 
         static int WriteToGpx (string json)
