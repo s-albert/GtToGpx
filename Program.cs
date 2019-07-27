@@ -5,6 +5,7 @@ using System.Text;
 using System.Xml;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace GtToGpx
 {
@@ -12,9 +13,11 @@ namespace GtToGpx
     {
         static void Main (string[] args)
         {
-            Console.WriteLine ("Hello World!");
+            Console.WriteLine ("File to parse: " + args[0]);
 
             var json = ReadJsonFile (args[0]);
+
+            Console.WriteLine ("Result: " + json);
 
             // WriteToGpx (json);
         }
@@ -25,7 +28,7 @@ namespace GtToGpx
             using (StreamReader r = new StreamReader (file))
             {
                 string json = r.ReadToEnd ();
-                List<Item> items = JsonConvert.DeserializeObject<List<Item>> (json, new JsonSerializerSettings
+                var items = JsonConvert.DeserializeObject<List<Item>> (json, new JsonSerializerSettings
                 {
                     Error = Program.HandleDeserializationError
                 });
@@ -37,16 +40,13 @@ namespace GtToGpx
         {
             var currentError = errorArgs.ErrorContext.Error.Message;
             errorArgs.ErrorContext.Handled = true;
+            Console.WriteLine ("Error: " + currentError);
         }
 
         public class Item
         {
             public List<MotionPathData> motionPathData;
-            public int totalSteps;
-            public int totalTime;
-            public int sportType;
-            public int totalCalories;
-            public string timeZone;
+            public int recordDay;
         }
 
         public class MotionPathData
@@ -55,6 +55,11 @@ namespace GtToGpx
             public long endTime;
             public int totalDistance;
             public string attribute;
+            public int totalSteps;
+            public int totalTime;
+            public int sportType;
+            public int totalCalories;
+            public string timeZone;
         }
 
         static int WriteToGpx (string json)
