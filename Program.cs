@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Xml;
-using Newtonsoft.Json;
 using NetTopologySuite.IO;
+using Newtonsoft.Json;
 
 namespace GtToGpx
 {
@@ -16,24 +16,32 @@ namespace GtToGpx
 
             var json = ReadJsonFile (args[0]);
 
-           // WriteToGpx (json);
+            // WriteToGpx (json);
         }
 
         static List<Item> ReadJsonFile (string file)
         {
-            List<Item> items;
 
             using (StreamReader r = new StreamReader (file))
             {
                 string json = r.ReadToEnd ();
-                items = JsonConvert.DeserializeObject<List<Item>> (json);
+                List<Item> items = JsonConvert.DeserializeObject<List<Item>> (json, new JsonSerializerSettings
+                {
+                    Error = Program.HandleDeserializationError
+                });
+                return items;
             }
-            return items;
+        }
+
+        public static void HandleDeserializationError (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs errorArgs)
+        {
+            var currentError = errorArgs.ErrorContext.Error.Message;
+            errorArgs.ErrorContext.Handled = true;
         }
 
         public class Item
         {
-            public MotionPathData motionPathData;
+            public List<MotionPathData> motionPathData;
             public int totalSteps;
             public int totalTime;
             public int sportType;
@@ -61,13 +69,13 @@ namespace GtToGpx
                 }
 
                 ms.Position = 0;
-               // byte[] expected = File.ReadAllBytes (path);
+                // byte[] expected = File.ReadAllBytes (path);
 
                 // note that this is not a guarantee in the general case.  the inputs here have all been
                 // slightly tweaked such that it should succeed for our purposes.
-              //  Assert.False (diff.HasDifferences (), string.Join (Environment.NewLine, diff.Differences));
+                //  Assert.False (diff.HasDifferences (), string.Join (Environment.NewLine, diff.Differences));
             }
-                return 0;
+            return 0;
         }
     }
 }
