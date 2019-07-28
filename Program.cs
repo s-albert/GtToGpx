@@ -5,7 +5,6 @@ using System.Text;
 using System.Xml;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace GtToGpx
 {
@@ -14,17 +13,31 @@ namespace GtToGpx
         static void Main (string[] args)
         {
             Console.WriteLine ("File to parse: " + args[0]);
+            var items = ReadJsonFile (args[0]);
+            var gpxDataList = MapToGpxData (items);
 
-            var json = ReadJsonFile (args[0]);
+            foreach (GpxInputData gpxData in gpxDataList)
+            {
+                WriteToGpx (gpxData);
+            }
+        }
 
-            Console.WriteLine ("Result: " + json);
+        private static List<GpxInputData> MapToGpxData (List<Item> items)
+        {
+            List<GpxInputData> gpxData = new List<GpxInputData> ();
 
-            // WriteToGpx (json);
+            foreach (Item item in items)
+            {
+                foreach (MotionPathData motionPathData in item.motionPathData)
+                {
+                    gpxData.Add (new GpxInputData () { filename = "", gpxMetaData = new GpxMetadata ("author") });
+                }
+            }
+            return gpxData;
         }
 
         static List<Item> ReadJsonFile (string file)
         {
-
             using (StreamReader r = new StreamReader (file))
             {
                 string json = r.ReadToEnd ();
@@ -43,34 +56,14 @@ namespace GtToGpx
             Console.WriteLine ("Error: " + currentError);
         }
 
-        public class Item
+        static int WriteToGpx (GpxInputData gpxData)
         {
-            public List<MotionPathData> motionPathData;
-            public int recordDay;
-        }
-
-        public class MotionPathData
-        {
-            public long startTime;
-            public long endTime;
-            public int totalDistance;
-            public string attribute;
-            public int totalSteps;
-            public int totalTime;
-            public int sportType;
-            public int totalCalories;
-            public string timeZone;
-        }
-
-        static int WriteToGpx (string json)
-        {
-
             using (var ms = new MemoryStream ())
             {
                 var writerSettings = new XmlWriterSettings { Encoding = Encoding.UTF8, CloseOutput = false };
                 using (var wr = XmlWriter.Create (ms, writerSettings))
                 {
-                    GpxWriter.Write (wr, null, null, null, null);
+                    GpxWriter.Write (wr, null, gpxData.gpxMetaData, null, null);
                 }
 
                 ms.Position = 0;
