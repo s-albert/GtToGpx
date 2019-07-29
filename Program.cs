@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Xml;
+using NetTopologySuite.Features;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
 
@@ -30,13 +31,31 @@ namespace GtToGpx
             {
                 foreach (MotionPathData motionPathData in item.motionPathData)
                 {
-                    gpxData.Add (new GpxInputData () { filename = "", gpxMetaData = new GpxMetadata ("author") });
+                    gpxData.Add (new GpxInputData () { filename = GetFileName (item.recordDay, motionPathData), gpxMetaData = GetGpxMetadata(motionPathData) });
                 }
             }
             return gpxData;
         }
 
-        static List<Item> ReadJsonFile (string file)
+        private static GpxMetadata GetGpxMetadata(MotionPathData motionPathData) {
+            var metadata =  new GpxMetadata ("author");
+            var attributes = motionPathData.attribute.Split(";");
+            int i = 1;
+            while(i < attributes.Length) {
+                var a = attributes[i];
+                var aValue = a.Split("=");
+                if (aValue[0] == "k") {
+                }
+            }
+            return metadata;
+        }
+
+        private static string GetFileName (int recordDay, MotionPathData motionPathData)
+        {
+            return recordDay.ToString () + "-" + motionPathData.startTime.ToString ();
+        }
+
+        private static List<Item> ReadJsonFile (string file)
         {
             using (StreamReader r = new StreamReader (file))
             {
@@ -49,14 +68,14 @@ namespace GtToGpx
             }
         }
 
-        public static void HandleDeserializationError (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs errorArgs)
+        private static void HandleDeserializationError (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs errorArgs)
         {
             var currentError = errorArgs.ErrorContext.Error.Message;
             errorArgs.ErrorContext.Handled = true;
             Console.WriteLine ("Error: " + currentError);
         }
 
-        static int WriteToGpx (GpxInputData gpxData)
+        private static int WriteToGpx (GpxInputData gpxData)
         {
             using (var ms = new MemoryStream ())
             {
