@@ -31,23 +31,63 @@ namespace GtToGpx
             {
                 foreach (MotionPathData motionPathData in item.motionPathData)
                 {
-                    gpxData.Add (new GpxInputData () { filename = GetFileName (item.recordDay, motionPathData), gpxMetaData = GetGpxMetadata(motionPathData) });
+                    gpxData.Add (new GpxInputData () { filename = GetFileName (item.recordDay, motionPathData), gpxMetaData = new GpxMetadata("author"), gpxTrack = GetGpxMetadata (motionPathData) });
                 }
             }
             return gpxData;
         }
 
-        private static GpxMetadata GetGpxMetadata(MotionPathData motionPathData) {
-            var metadata =  new GpxMetadata ("author");
-            var attributes = motionPathData.attribute.Split(";");
+        private static GpxTrack GetGpxTrack (MotionPathData motionPathData)
+        {
+            var gpxTrack = new GpxTrack ();
+
+            var attributes = motionPathData.attribute.Split (";");
             int i = 1;
-            while(i < attributes.Length) {
+
+            List<GpxWaypoint> waypoints = new List<GpxWaypoint> ();
+            GpxWaypoint currentWaypoint = null;
+            while (i < attributes.Length)
+            {
                 var a = attributes[i];
-                var aValue = a.Split("=");
-                if (aValue[0] == "k") {
+                var aValue = a.Split ("=");
+                switch (aValue[0])
+                {
+                    case "k":
+                        {
+                            currentWaypoint = new GpxWaypoint (GpxLongitude.MinValue, GpxLatitude.MinValue);
+                            waypoints.Add (currentWaypoint);
+                            break;
+                        }
+                    case "lat":
+                        {
+                            if (currentWaypoint != null)
+                            {
+                                currentWaypoint.WithLatitude (new GpxLatitude (double.Parse (aValue[1])));
+                            }
+                            break;
+                        }
+                    case "lon":
+                        {
+                            if (currentWaypoint != null)
+                            {
+                                currentWaypoint.WithLongitude (new GpxLongitude (double.Parse (aValue[1])));
+                            }
+                            break;
+                        }
+                    case "t":
+                        {
+                            if (currentWaypoint != null)
+                            {
+                                currentWaypoint.WithTimestampUtc (DateTime.Parse (aValue[1]));
+                            }
+                            break;
+                        }
                 }
             }
-            return metadata;
+            System.Collections.Immutable.ImmutableArray<GpxTrackSegment> segments = new System.Collections.Immutable.ImmutableArray<GpxTrackSegment> ();
+            segments.Add (new GpxTrackSegment ().WithWaypoints (waypoints));
+            gpxTrack.WithSegments (segments);
+            return gpxTrack;
         }
 
         private static string GetFileName (int recordDay, MotionPathData motionPathData)
@@ -77,21 +117,20 @@ namespace GtToGpx
 
         private static int WriteToGpx (GpxInputData gpxData)
         {
-            using (var ms = new MemoryStream ())
+            var writerSettings = new XmlWriterSettings { Encoding = Encoding.UTF8 };
+            using (var wr = XmlWriter.Create (gpxData.filename, writerSettings))
             {
-                var writerSettings = new XmlWriterSettings { Encoding = Encoding.UTF8, CloseOutput = false };
-                using (var wr = XmlWriter.Create (ms, writerSettings))
-                {
-                    GpxWriter.Write (wr, null, gpxData.gpxMetaData, null, null);
-                }
-
-                ms.Position = 0;
-                // byte[] expected = File.ReadAllBytes (path);
-
-                // note that this is not a guarantee in the general case.  the inputs here have all been
-                // slightly tweaked such that it should succeed for our purposes.
-                //  Assert.False (diff.HasDifferences (), string.Join (Environment.NewLine, diff.Differences));
+                GpxWriter.Write (wr, null, gpxData.gpxMetaData, null, null);
             }
+
+            IFeature
+
+            // byte[] expected = File.ReadAllBytes (path);
+
+            // note that this is not a guarantee in the general case.  the inputs here have all been
+            // slightly tweaked such that it should succeed for our purposes.
+            //  Assert.False (diff.HasDifferences (), string.Join (Environment.NewLine, diff.Differences));
+
             return 0;
         }
     }
