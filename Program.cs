@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Xml;
 using NetTopologySuite.Features;
 using NetTopologySuite.IO;
@@ -13,13 +15,36 @@ namespace GtToGpx
     {
         static void Main (string[] args)
         {
-            Console.WriteLine ("File to parse: " + args[0]);
-            var items = ReadJsonFile (args[0]);
-            var gpxDataList = MapToGpxData (items);
-
-            foreach (GpxInputData gpxData in gpxDataList)
+            try
             {
-                WriteToGpx (gpxData);
+                Console.OutputEncoding = Encoding.UTF8;
+                // Change current culture
+                CultureInfo culture;
+                if (Thread.CurrentThread.CurrentCulture.Name != "en-US")
+                {
+                    culture = CultureInfo.CreateSpecificCulture ("en-US");
+
+                    Thread.CurrentThread.CurrentCulture = culture;
+                    Thread.CurrentThread.CurrentUICulture = culture;
+                }
+
+                Console.WriteLine ("File to parse: " + args[0]);
+                var items = ReadJsonFile (args[0]);
+                if (items == null)
+                {
+                    throw new Exception ("Json output is null.");
+                }
+
+                var gpxDataList = MapToGpxData (items);
+
+                foreach (GpxInputData gpxData in gpxDataList)
+                {
+                    WriteToGpx (gpxData);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine ("Error: " + ex.Message);
             }
         }
 
@@ -31,7 +56,12 @@ namespace GtToGpx
             {
                 foreach (MotionPathData motionPathData in item.motionPathData)
                 {
-                    gpxData.Add (new GpxInputData () { filename = GetFileName (item.recordDay, motionPathData), gpxMetaData = new GpxMetadata("author"), gpxTrack = GetGpxMetadata (motionPathData) });
+                    gpxData.Add (new GpxInputData ()
+                    {
+                        filename = GetFileName (item.recordDay, motionPathData),
+                            gpxMetaData = new GpxMetadata ("author"),
+                            gpxTrack = GetGpxTrack (motionPathData)
+                    });
                 }
             }
             return gpxData;
@@ -42,15 +72,20 @@ namespace GtToGpx
             var gpxTrack = new GpxTrack ();
 
             var attributes = motionPathData.attribute.Split (";");
-            int i = 1;
+            int i = 0;
 
             List<GpxWaypoint> waypoints = new List<GpxWaypoint> ();
             GpxWaypoint currentWaypoint = null;
             while (i < attributes.Length)
             {
+                i++;
                 var a = attributes[i];
-                var aValue = a.Split ("=");
-                switch (aValue[0])
+                var pair = a.Split ("=");
+                if (pair.Length != 2)
+                {
+                    throw new Exception ("Ungültiges Key-Value Pair: " + a);
+                }
+                switch (pair[0])
                 {
                     case "k":
                         {
@@ -62,7 +97,8 @@ namespace GtToGpx
                         {
                             if (currentWaypoint != null)
                             {
-                                currentWaypoint.WithLatitude (new GpxLatitude (double.Parse (aValue[1])));
+                                double d = double.Parse (pair[1]);
+                                currentWaypoint.WithLatitude (new GpxLatitude (d));
                             }
                             break;
                         }
@@ -70,7 +106,7 @@ namespace GtToGpx
                         {
                             if (currentWaypoint != null)
                             {
-                                currentWaypoint.WithLongitude (new GpxLongitude (double.Parse (aValue[1])));
+                                currentWaypoint.WithLongitude (new GpxLongitude (double.Parse (pair[1])));
                             }
                             break;
                         }
@@ -78,7 +114,10 @@ namespace GtToGpx
                         {
                             if (currentWaypoint != null)
                             {
-                                currentWaypoint.WithTimestampUtc (DateTime.Parse (aValue[1]));
+                                var d = double.Parse(pair[1]);
+                                var l = Convert.ToInt64(d);
+                                DateTime t = new DateTime(636905317316732000);
+                                currentWaypoint.WithTimestampUtc (t);
                             }
                             break;
                         }
@@ -117,13 +156,15 @@ namespace GtToGpx
 
         private static int WriteToGpx (GpxInputData gpxData)
         {
+            var f = new GpxFile ();
+            f.Tracks.Add (gpxData.gpxTrack);
+
             var writerSettings = new XmlWriterSettings { Encoding = Encoding.UTF8 };
             using (var wr = XmlWriter.Create (gpxData.filename, writerSettings))
             {
-                GpxWriter.Write (wr, null, gpxData.gpxMetaData, null, null);
+                f.WriteTo (wr, new GpxWriterSettings ());
+                // GpxWriter.Write (wr, null, gpxData.gpxMetaData, null, null);
             }
-
-            IFeature
 
             // byte[] expected = File.ReadAllBytes (path);
 
