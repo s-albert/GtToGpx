@@ -105,7 +105,7 @@ namespace GtToGpx
                             if (currentWaypoint != null)
                             {
                                 double d = double.Parse (pair[1]);
-                                currentWaypoint.WithLatitude (new GpxLatitude (d));
+                                currentWaypoint = currentWaypoint.WithLatitude (new GpxLatitude (d));
                             }
                             break;
                         }
@@ -113,7 +113,7 @@ namespace GtToGpx
                         {
                             if (currentWaypoint != null)
                             {
-                                currentWaypoint.WithLongitude (new GpxLongitude (double.Parse (pair[1])));
+                                currentWaypoint = currentWaypoint.WithLongitude (new GpxLongitude (double.Parse (pair[1])));
                             }
                             break;
                         }
@@ -142,9 +142,8 @@ namespace GtToGpx
                 }
             }
             System.Collections.Immutable.ImmutableArray<GpxTrackSegment> segments = System.Collections.Immutable.ImmutableArray<GpxTrackSegment>.Empty;
-            segments.Add (new GpxTrackSegment ().WithWaypoints (waypoints));
-            gpxTrack.WithSegments (segments);
-            return gpxTrack;
+            segments = segments.Add (new GpxTrackSegment ().WithWaypoints (waypoints));
+            return gpxTrack.WithSegments (segments);
         }
 
         private static string GetFileName (MotionPathData motionPathData)
