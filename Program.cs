@@ -81,6 +81,7 @@ namespace GtToGpx
             var attributes = motionPathData.attribute.Split (";");
             int i = 0;
 
+            Point p = null;
             List<GpxWaypoint> waypoints = new List<GpxWaypoint> ();
             GpxWaypoint currentWaypoint = null;
             while (i < attributes.Length)
@@ -96,30 +97,46 @@ namespace GtToGpx
                 {
                     case "k":
                         {
-                            currentWaypoint = new GpxWaypoint (GpxLongitude.MinValue, GpxLatitude.MinValue);
-                            waypoints.Add (currentWaypoint);
+                            if (p != null && p.T != null)
+                            {
+                                p.T = DateTime.SpecifyKind (p.T, DateTimeKind.Utc);
+                                waypoints.Add (new GpxWaypoint (new GpxLongitude (p.Long), new GpxLatitude (p.Lat), p.Elev, p.T, null, null, null, null, null, null, System.Collections.Immutable.ImmutableArray<GpxWebLink>.Empty, null, null, null, null, null, null, null, null, null, null));
+                            }
+                            p = new Point ();
+
                             break;
                         }
                     case "lat":
                         {
-                            if (currentWaypoint != null)
+                            if (p != null)
                             {
                                 double d = double.Parse (pair[1]);
-                                currentWaypoint = currentWaypoint.WithLatitude (new GpxLatitude (d));
+                                p.Lat = d;
                             }
+
                             break;
                         }
                     case "lon":
                         {
-                            if (currentWaypoint != null)
+                            if (p != null)
                             {
-                                currentWaypoint = currentWaypoint.WithLongitude (new GpxLongitude (double.Parse (pair[1])));
+                                double d = double.Parse (pair[1]);
+                                p.Long = d;
+                            }
+                            break;
+                        }
+                    case "alt":
+                        {
+                            if (p != null)
+                            {
+                                double d = double.Parse (pair[1]);
+                                p.Elev = d;
                             }
                             break;
                         }
                     case "t":
                         {
-                            if (currentWaypoint != null)
+                            if (p != null)
                             {
                                 var d = double.Parse (pair[1]);
                                 var l = Convert.ToInt64 (d);
@@ -134,8 +151,7 @@ namespace GtToGpx
 
                                 l += offset; // 1970-01-01
                                 DateTime t = new DateTime (l);
-                                t = DateTime.SpecifyKind (t, DateTimeKind.Utc);
-                                currentWaypoint.WithTimestampUtc (t);
+                                p.T = t;
                             }
                             break;
                         }
@@ -156,7 +172,7 @@ namespace GtToGpx
             tz /= 100;
             t = t.AddHours (tz);
 
-            return t.ToString("yyyy-MM-ddTHH_mm_ssZ") + " - " + motionPathData.sportType.ToString () + ".gpx";
+            return t.ToString ("yyyy-MM-ddTHH_mm_ssZ") + " - " + motionPathData.sportType.ToString () + ".gpx";
         }
 
         private static List<Item> ReadJsonFile (string file)
