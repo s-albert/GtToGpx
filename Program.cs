@@ -11,41 +11,44 @@ using Newtonsoft.Json;
 
 namespace GtToGpx
 {
+
     class Program
     {
+        private static long offset = new DateTime (1970, 1, 1).Ticks;
+
         static void Main (string[] args)
         {
-            try
+            // try
+            // {
+            Console.OutputEncoding = Encoding.UTF8;
+            // Change current culture
+            CultureInfo culture;
+            if (Thread.CurrentThread.CurrentCulture.Name != "en-US")
             {
-                Console.OutputEncoding = Encoding.UTF8;
-                // Change current culture
-                CultureInfo culture;
-                if (Thread.CurrentThread.CurrentCulture.Name != "en-US")
-                {
-                    culture = CultureInfo.CreateSpecificCulture ("en-US");
+                culture = CultureInfo.CreateSpecificCulture ("en-US");
 
-                    Thread.CurrentThread.CurrentCulture = culture;
-                    Thread.CurrentThread.CurrentUICulture = culture;
-                }
-
-                Console.WriteLine ("File to parse: " + args[0]);
-                var items = ReadJsonFile (args[0]);
-                if (items == null)
-                {
-                    throw new Exception ("Json output is null.");
-                }
-
-                var gpxDataList = MapToGpxData (items);
-
-                foreach (GpxInputData gpxData in gpxDataList)
-                {
-                    WriteToGpx (gpxData);
-                }
+                Thread.CurrentThread.CurrentCulture = culture;
+                Thread.CurrentThread.CurrentUICulture = culture;
             }
-            catch (Exception ex)
+
+            Console.WriteLine ("File to parse: " + args[0]);
+            var items = ReadJsonFile (args[0]);
+            if (items == null)
             {
-                Console.WriteLine ("Error: " + ex.Message);
+                throw new Exception ("Json output is null.");
             }
+
+            var gpxDataList = MapToGpxData (items);
+
+            foreach (GpxInputData gpxData in gpxDataList)
+            {
+                WriteToGpx (gpxData);
+            }
+            // }
+            // catch (Exception ex)
+            // {
+            //     Console.WriteLine ("Error: " + ex.Message);
+            // }
         }
 
         private static List<GpxInputData> MapToGpxData (List<Item> items)
@@ -56,12 +59,16 @@ namespace GtToGpx
             {
                 foreach (MotionPathData motionPathData in item.motionPathData)
                 {
-                    gpxData.Add (new GpxInputData ()
+                    if (motionPathData.sportType >= 2 && motionPathData.sportType <= 5)
                     {
-                        filename = GetFileName (item.recordDay, motionPathData),
-                            gpxMetaData = new GpxMetadata ("author"),
-                            gpxTrack = GetGpxTrack (motionPathData)
-                    });
+
+                        gpxData.Add (new GpxInputData ()
+                        {
+                            filename = GetFileName (motionPathData),
+                                gpxMetaData = new GpxMetadata ("author"),
+                                gpxTrack = GetGpxTrack (motionPathData)
+                        });
+                    }
                 }
             }
             return gpxData;
@@ -83,7 +90,7 @@ namespace GtToGpx
                 var pair = a.Split ("=");
                 if (pair.Length != 2)
                 {
-                    throw new Exception ("Ungültiges Key-Value Pair: " + a);
+                    break;
                 }
                 switch (pair[0])
                 {
@@ -114,24 +121,43 @@ namespace GtToGpx
                         {
                             if (currentWaypoint != null)
                             {
-                                var d = double.Parse(pair[1]);
-                                var l = Convert.ToInt64(d);
-                                DateTime t = new DateTime(636905317316732000);
+                                var d = double.Parse (pair[1]);
+                                var l = Convert.ToInt64 (d);
+                                if (l > 10000000000)
+                                {
+                                    l *= 10000; // convert to ticks
+                                }
+                                else
+                                {
+                                    l *= 10000000;
+                                }
+
+                                l += offset; // 1970-01-01
+                                DateTime t = new DateTime (l);
+                                t = DateTime.SpecifyKind (t, DateTimeKind.Utc);
                                 currentWaypoint.WithTimestampUtc (t);
                             }
                             break;
                         }
                 }
             }
-            System.Collections.Immutable.ImmutableArray<GpxTrackSegment> segments = new System.Collections.Immutable.ImmutableArray<GpxTrackSegment> ();
+            System.Collections.Immutable.ImmutableArray<GpxTrackSegment> segments = System.Collections.Immutable.ImmutableArray<GpxTrackSegment>.Empty;
             segments.Add (new GpxTrackSegment ().WithWaypoints (waypoints));
             gpxTrack.WithSegments (segments);
             return gpxTrack;
         }
 
-        private static string GetFileName (int recordDay, MotionPathData motionPathData)
+        private static string GetFileName (MotionPathData motionPathData)
         {
-            return recordDay.ToString () + "-" + motionPathData.startTime.ToString ();
+            long l = motionPathData.startTime;
+            l *= 10000; // Ticks
+            l += offset; // 1970
+            DateTime t = new DateTime (l);
+            var tz = int.Parse (motionPathData.timeZone);
+            tz /= 100;
+            t = t.AddHours (tz);
+
+            return t.ToString("yyyy-MM-ddTHH_mm_ssZ") + " - " + motionPathData.sportType.ToString () + ".gpx";
         }
 
         private static List<Item> ReadJsonFile (string file)
