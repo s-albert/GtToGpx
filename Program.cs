@@ -88,7 +88,7 @@ namespace GtToGpx
                         gpxData.Add (new GpxInputData ()
                         {
                             filename = GetName (motionPathData) + ".gpx",
-                                gpxMetaData = new GpxMetadata ("author"),
+                                gpxMetaData = new GpxMetadata ("GttoGpx"),
                                 gpxTrack = GetGpxTrack (motionPathData)
                         });
                     }
