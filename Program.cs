@@ -54,10 +54,13 @@ namespace GtToGpx
                     path = args[1];
                 }
 
+                int i = 0;
                 foreach (GpxInputData gpxData in gpxDataList)
                 {
                     WriteToGpx (gpxData, path);
+                    i++;
                 }
+                Console.WriteLine(i.ToString() + " gpx files created.");
             }
             // }
             // catch (Exception ex)
@@ -84,7 +87,7 @@ namespace GtToGpx
 
                         gpxData.Add (new GpxInputData ()
                         {
-                            filename = GetFileName (motionPathData),
+                            filename = GetName (motionPathData) + ".gpx",
                                 gpxMetaData = new GpxMetadata ("author"),
                                 gpxTrack = GetGpxTrack (motionPathData)
                         });
@@ -96,14 +99,11 @@ namespace GtToGpx
 
         private static GpxTrack GetGpxTrack (MotionPathData motionPathData)
         {
-            var gpxTrack = new GpxTrack ();
-
             var attributes = motionPathData.attribute.Split (";");
             int i = 0;
 
             Point p = null;
             List<GpxWaypoint> waypoints = new List<GpxWaypoint> ();
-            GpxWaypoint currentWaypoint = null;
             while (i < attributes.Length)
             {
                 i++;
@@ -117,12 +117,8 @@ namespace GtToGpx
                 {
                     case "k":
                         {
-                            if (p != null && p.T != null)
-                            {
-                                p.T = DateTime.SpecifyKind (p.T, DateTimeKind.Utc);
-                                waypoints.Add (new GpxWaypoint (new GpxLongitude (p.Long), new GpxLatitude (p.Lat), p.Elev, p.T, null, null, null, null, null, null, System.Collections.Immutable.ImmutableArray<GpxWebLink>.Empty, null, null, null, null, null, null, null, null, null, null));
-                            }
-                            p = new Point ();
+                            AddWaypoint(p, waypoints);
+                            p = new Point();
 
                             break;
                         }
@@ -176,13 +172,45 @@ namespace GtToGpx
                             break;
                         }
                 }
+                AddWaypoint(p, waypoints);
             }
             System.Collections.Immutable.ImmutableArray<GpxTrackSegment> segments = System.Collections.Immutable.ImmutableArray<GpxTrackSegment>.Empty;
-            segments = segments.Add (new GpxTrackSegment ().WithWaypoints (waypoints));
-            return gpxTrack.WithSegments (segments);
+            segments = segments.Add (new GpxTrackSegment (new ImmutableGpxWaypointTable(waypoints), null));
+
+            var gpxTrack = new GpxTrack (GetName (motionPathData), 
+            "Steps: " + motionPathData.totalSteps, 
+            "Cals: " + motionPathData.totalCalories, 
+            "", 
+            System.Collections.Immutable.ImmutableArray<GpxWebLink>.Empty,
+            null,
+            null,
+            motionPathData.sportType,
+            segments
+            );
+            return gpxTrack;
         }
 
-        private static string GetFileName (MotionPathData motionPathData)
+        private static string ConvertCategory(int i) {
+            switch(i)
+            {
+                case 2: return "Wandern"; 
+                case 4: return "Laufen";
+                case 3: return "Radfahren";
+                case 5: return "Gehen";
+                default: return "Aktivitaet";
+            }
+        }
+
+        private static void AddWaypoint(Point p, List<GpxWaypoint> waypoints)
+        {
+            if (p != null && p.T != DateTime.MinValue && p.Lat != 0 && p.Long != 0 && p.Lat != 90 && p.Long != 90)
+            {
+                p.T = DateTime.SpecifyKind(p.T, DateTimeKind.Utc);
+                waypoints.Add(new GpxWaypoint(new GpxLongitude(p.Long), new GpxLatitude(p.Lat), p.Elev, p.T, null, null, null, null, null, null, System.Collections.Immutable.ImmutableArray<GpxWebLink>.Empty, null, null, null, null, null, null, null, null, null, null));
+            }
+        }
+
+        private static string GetName (MotionPathData motionPathData)
         {
             long l = motionPathData.startTime;
             l *= 10000; // Ticks
@@ -192,7 +220,7 @@ namespace GtToGpx
             tz /= 100;
             t = t.AddHours (tz);
 
-            return t.ToString ("yyyy-MM-ddTHH_mm_ssZ") + " - " + motionPathData.sportType.ToString () + ".gpx";
+            return t.ToString ("yyyy-MM-ddTHH_mm_ssZ") + " - " + ConvertCategory(motionPathData.sportType);
         }
 
         private static List<Item> ReadJsonFile (string file)
@@ -204,6 +232,7 @@ namespace GtToGpx
                 {
                     Error = Program.HandleDeserializationError
                 });
+                Console.WriteLine(file + " read...");
                 return items;
             }
         }
@@ -229,7 +258,7 @@ namespace GtToGpx
             using (var wr = XmlWriter.Create (path, writerSettings))
             {
                 f.WriteTo (wr, new GpxWriterSettings ());
-                // GpxWriter.Write (wr, null, gpxData.gpxMetaData, null, null);
+                Console.WriteLine(path + " written...");
             }
 
             // byte[] expected = File.ReadAllBytes (path);
