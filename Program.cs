@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Xml;
@@ -18,37 +19,56 @@ namespace GtToGpx
 
         static void Main (string[] args)
         {
-            // try
-            // {
-            Console.OutputEncoding = Encoding.UTF8;
-            // Change current culture
-            CultureInfo culture;
-            if (Thread.CurrentThread.CurrentCulture.Name != "en-US")
-            {
-                culture = CultureInfo.CreateSpecificCulture ("en-US");
-
-                Thread.CurrentThread.CurrentCulture = culture;
-                Thread.CurrentThread.CurrentUICulture = culture;
+            if (args.Length == 0)
+            { // Hilfe
+                Console.WriteLine ("Usage: GttoGpx data.json [outputpath]");
+                Console.WriteLine ($"Version: " +
+                    $"{Assembly.GetEntryAssembly().GetName().Version}");
             }
-
-            Console.WriteLine ("File to parse: " + args[0]);
-            var items = ReadJsonFile (args[0]);
-            if (items == null)
+            else
             {
-                throw new Exception ("Json output is null.");
-            }
+                // try
+                // {
+                Console.OutputEncoding = Encoding.UTF8;
+                // Change current culture
+                CultureInfo culture;
+                if (Thread.CurrentThread.CurrentCulture.Name != "en-US")
+                {
+                    culture = CultureInfo.CreateSpecificCulture ("en-US");
 
-            var gpxDataList = MapToGpxData (items);
+                    Thread.CurrentThread.CurrentCulture = culture;
+                    Thread.CurrentThread.CurrentUICulture = culture;
+                }
 
-            foreach (GpxInputData gpxData in gpxDataList)
-            {
-                WriteToGpx (gpxData);
+                Console.WriteLine ("File to parse: " + args[0]);
+                var items = ReadJsonFile (args[0]);
+                if (items == null)
+                {
+                    throw new Exception ("Json output is null.");
+                }
+
+                var gpxDataList = MapToGpxData (items);
+                
+                string path = null;
+                if (args.Length > 1) {
+                    path = args[1];
+                }
+
+                foreach (GpxInputData gpxData in gpxDataList)
+                {
+                    WriteToGpx (gpxData, path);
+                }
             }
             // }
             // catch (Exception ex)
             // {
             //     Console.WriteLine ("Error: " + ex.Message);
             // }
+        }
+
+        public string GetAssemblyVersion ()
+        {
+            return GetType ().Assembly.GetName ().Version.ToString ();
         }
 
         private static List<GpxInputData> MapToGpxData (List<Item> items)
@@ -195,13 +215,18 @@ namespace GtToGpx
             Console.WriteLine ("Error: " + currentError);
         }
 
-        private static int WriteToGpx (GpxInputData gpxData)
+        private static int WriteToGpx (GpxInputData gpxData, string path)
         {
             var f = new GpxFile ();
             f.Tracks.Add (gpxData.gpxTrack);
 
             var writerSettings = new XmlWriterSettings { Encoding = Encoding.UTF8 };
-            using (var wr = XmlWriter.Create (gpxData.filename, writerSettings))
+            if (path != null) {
+                path = Path.Combine(path, gpxData.filename);
+            } else {
+                path = gpxData.filename;
+            }
+            using (var wr = XmlWriter.Create (path, writerSettings))
             {
                 f.WriteTo (wr, new GpxWriterSettings ());
                 // GpxWriter.Write (wr, null, gpxData.gpxMetaData, null, null);

@@ -8,12 +8,24 @@
                  "request": "launch",
                  "preLaunchTask": "build",
                  "program": "${workspaceFolder}//bin/Debug/netcoreapp2.1/GtToGpx.dll",
-                 "args": ["test/path.json"],
+                 "args": ["test/path.json", "test"],
                  "cwd": "${workspaceFolder}/",
                  "console": "internalConsole",
                  "stopAtEntry": false,
                  "internalConsoleOptions": "openOnSessionStart"
              },
+             {
+                "name": ".NET Core Launch (version)",
+                "type": "coreclr",
+                "request": "launch",
+                "preLaunchTask": "build",
+                "program": "${workspaceFolder}//bin/Debug/netcoreapp2.1/GtToGpx.dll",
+                "args": [],
+                "cwd": "${workspaceFolder}/",
+                "console": "internalConsole",
+                "stopAtEntry": false,
+                "internalConsoleOptions": "openOnSessionStart"
+            },
              {
                  "name": ".NET Core Attach",
                  "type": "coreclr",
